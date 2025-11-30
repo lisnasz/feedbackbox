@@ -43,7 +43,7 @@ class DashboardController extends Controller
 
         // Response time statistics
         $avgResponseTime = Feedback::whereNotNull('admin_response')
-            ->selectRaw('AVG(JULIANDAY(updated_at) - JULIANDAY(created_at)) as avg_days')
+            ->selectRaw('AVG(DATEDIFF(updated_at, created_at)) as avg_days')
             ->pluck('avg_days')
             ->first();
 

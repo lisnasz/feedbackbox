@@ -562,7 +562,7 @@
     <header>
         <nav>
             <a href="/" class="logo">
-                <img src="/logdkp.webp" alt="Logo Dinas Ketahanan Pangan">
+                <img src="/logdkprbg.png" alt="Logo Dinas Ketahanan Pangan">
                 <span>Dinas Ketahanan Pangan</span>
             </a>
             <ul class="nav-links">
