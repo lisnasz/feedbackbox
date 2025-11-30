@@ -22,3 +22,36 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# OS specific files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE & Editor
+.vscode/
+.idea/
+.phpstorm.meta.php
+.phpactor.json
+*.swp
+*.swo
+*~
+
+# Temporary documentation files
+ADMIN_*.md
+CHECKLIST.md
+COMPLETION_SUMMARY.txt
+DASHBOARD_FEATURES.md
+DOCUMENTATION_*.md
+DOKUMENTASI.md
+ENHANCEMENT_COMPLETION_REPORT.md
+FINAL_SUMMARY.md
+IMPLEMENTASI_RINGKASAN.md
+IMPLEMENTATION_CHECKLIST.md
+PROJECT_COMPLETION_REPORT.md
+QUICK_REFERENCE.md
+README_WEBSITE.md
+ROUTES_UPDATE_GUIDE.md
+SECURITY_AND_LOGGING.md
+START_HERE.txt
+ARCHITECTURE.md
