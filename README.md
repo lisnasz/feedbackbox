@@ -1,301 +1,173 @@
-# 📦 Dinas Ketahanan Pangan - Feedback Box System
+# Feedback Box Digital Dinas Ketahanan Pangan
 
-> **Sistem Manajemen Pengaduan dan Saran yang Komprehensif untuk Dinas Ketahanan Pangan Kabupaten Garut**
+Aplikasi Laravel 10 untuk mengelola pengaduan dan saran masyarakat Kabupaten Garut. Sistem ini menyatukan formulir publik yang ramah pengguna, panel admin dengan workflow status lengkap, ekspor arsip, hingga log aktivitas demi audit internal.
 
-![Status](https://img.shields.io/badge/Status-Production%20Ready-green)
-![Version](https://img.shields.io/badge/Version-1.0-blue)
-![Laravel](https://img.shields.io/badge/Laravel-10%2B-red)
+## Gambaran Umum Web
+- **Tujuan**: menampung aspirasi publik secara terstruktur, menindaklanjuti sesuai kategori, dan memberi transparansi ke pimpinan.
+- **Peran Pengguna**: masyarakat (kirim aspirasi), admin/operator (olah & respon), supervisor IT (monitor keamanan/log).
+- **Hasil Sistem**: dashboard status, daftar pengaduan dengan filter komprehensif, tanggapan admin, riwayat status, dokumen ekspor CSV/PDF.
+- **Tech stack**: Laravel 10 (PHP 8.2), MySQL/SQLite, Blade + Tailwind, Axios/Fetch untuk AJAX, Vite untuk aset.
 
----
+## Modul & Fitur Utama
+### 1. Pengalaman Publik
+- Landing page berisi hero, informasi dinas, layanan unggulan, dan CTA login admin.
+- Form feedback AJAX dengan field nama, email, kategori (sinkron endpoint `/api/categories`), dan pesan.
+- Validasi sisi server + client, notifikasi sukses/gagal, serta pelacakan IP untuk keamanan.
 
-## 🎯 Tentang Proyek
+### 2. Panel Admin
+- Login khusus guard `auth.admin` dengan proteksi CSRF & rate limit bawaan Laravel.
+- Dashboard metrik: total pengaduan, status terbaru, dan tombol cepat menuju daftar tertentu.
+- Modul pengaduan: tabel responsif + pencarian teks penuh, filter status/kategori/tanggal, pagination, detail lengkap, tanggapan admin, perubahan status (`baru → diproses → selesai`).
+- Modul kategori: CRUD dengan validasi unik dan pencegahan penghapusan ketika sedang dipakai.
 
-Sistem informasi terintegrasi untuk mengelola pengaduan, saran, kritik, dan pertanyaan dari masyarakat kepada Dinas Ketahanan Pangan Kabupaten Garut.
+### 3. Aktivitas & Pelaporan
+- Activity log menyimpan `admin_username`, aksi (`login`, `update_status`, `export_pdf`, dst), IP, user agent, dan status.
+- Ekspor CSV atau PDF sesuai filter aktif untuk bahan laporan bulanan.
+- Riwayat status per pengaduan membantu audit tindak lanjut.
 
-### Fitur Utama
-- ✅ **Form Feedback Publik** - Masyarakat dapat mengirim pengaduan/saran
-- ✅ **Admin Panel** - Dashboard komprehensif untuk mengelola pengaduan
-- ✅ **Pencarian & Filter Advanced** - Cari pengaduan dengan kriteria spesifik
-- ✅ **Manajemen Kategori** - Kelola kategori pengaduan (CRUD)
-- ✅ **Tanggapan Admin** - Admin dapat memberikan respon ke pengirim
-- ✅ **Status Tracking** - Lacak status setiap pengaduan (Baru/Diproses/Selesai)
-- ✅ **Responsive Design** - Bekerja di desktop, tablet, dan mobile
-- ✅ **Dokumentasi Lengkap** - User guide, technical docs, dan quick reference
+## Dokumentasi Pengguna & Alur Kerja
+### Alur operasional singkat
+1. Masyarakat membuka halaman utama dan mengirim form feedback.
+2. Sistem mencatat data + status awal "baru" dan mengirim notifikasi sukses.
+3. Admin login, memantau dashboard, lalu membuka daftar pengaduan.
+4. Admin membaca detail, menambahkan tanggapan, mengubah status ke "diproses" atau "selesai".
+5. Supervisor IT mengecek Activity Log berkala untuk mendeteksi anomali.
 
----
+### Rute Publik
+| Method | Endpoint | Deskripsi | Middleware |
+|--------|----------|-----------|------------|
+| GET | `/` | Landing page + formulir | `web`
+| POST | `/feedback` | Simpan pengaduan (respons JSON) | `throttle:web`
+| GET | `/api/categories` | Daftar kategori aktif | `api`
 
-## 🚀 Quick Start
+### Rute Panel Admin
+| Method | Endpoint | Deskripsi | Middleware |
+|--------|----------|-----------|------------|
+| GET/POST | `/admin/login` | Form + proses login | `guest:admin`
+| POST | `/admin/logout` | Akhiri sesi admin | `auth.admin`
+| GET | `/admin` | Dashboard utama | `auth.admin`
+| GET | `/admin/feedback` | Daftar pengaduan + filter | `auth.admin`
+| GET | `/admin/feedback/{id}` | Detail, tanggapan, riwayat status | `auth.admin`
+| POST | `/admin/feedback/{id}/status` | Perbarui status `baru/diproses/selesai` | `auth.admin`
+| POST | `/admin/feedback/{id}/response` | Simpan tanggapan admin | `auth.admin`
+| Resource | `/admin/categories` | CRUD kategori | `auth.admin`
+| GET | `/admin/activity-logs` | Monitoring aksi admin | `auth.admin`
+| GET | `/admin/export/{csv|pdf}` | Ekspor sesuai filter aktif | `auth.admin`
 
-### Prerequisites
-- PHP 8.0+, Composer, SQLite, Modern browser
+### Hak akses ringkas
+| Peran | Hak | Catatan |
+|-------|-----|---------|
+| Masyarakat | Submit pengaduan via form publik | Tidak perlu login |
+| Admin / Operator | Semua modul admin: dashboard, feedback, kategori, ekspor | Guard khusus `auth.admin` |
+| Supervisor IT | Hak admin + fokus pada Activity Log dan konfigurasi | Biasanya menggunakan akun admin senior |
 
-### Installation
+## Instalasi & Menjalankan Proyek
+1. **Persyaratan**: PHP 8.2+, Composer 2+, MySQL 8/ MariaDB 10 (atau SQLite), Node.js 18+ bila butuh kompilasi aset.
+2. **Clone & dependency**
+   ```bash
+   git clone <repo-url>
+   cd feedbackbox
+   composer install
+   npm install   # opsional bila perlu Vite dev server
+   ```
+3. **Konfigurasi environment**
+   ```bash
+   cp .env.example .env
+   php artisan key:generate
+   ```
+   Atur koneksi database di `.env` (contoh):
+   ```dotenv
+   DB_CONNECTION=mysql
+   DB_HOST=127.0.0.1
+   DB_PORT=3306
+   DB_DATABASE=feedbackbox
+   DB_USERNAME=root
+   DB_PASSWORD=secret
+   ```
+4. **Migrasi & seeding**
+   ```bash
+   php artisan migrate --seed
+   ```
+   Perintah ini membuat tabel users, categories, feedbacks, activity_logs, sessions, lalu mengisi user admin & kategori contoh.
+5. **Menjalankan aplikasi**
+   ```bash
+   php artisan serve --host 127.0.0.1 --port 8000
+   npm run dev   # atau npm run build untuk produksi
+   ```
 
-```bash
-cd c:\xampp\htdocs\feedbackbox
-composer install
-cp .env.example .env
-php artisan key:generate
-php artisan migrate --force
-php artisan db:seed
-php artisan serve --host 127.0.0.1 --port 8000
+## Akun Bawaan
+| Area | URL | Username | Password |
+|------|-----|----------|----------|
+| Admin Panel | `http://localhost:8000/admin/login` | `admin` | `admin123` |
+
+## Struktur Direktori Singkat
+```
+app/
+├── Http/
+│   ├── Controllers/ (FeedbackController, Admin/*, AuthController)
+│   ├── Middleware/ (Authenticate, AdminAuth)
+│   └── Requests/FeedbackRequest.php
+├── Models/ (Feedback, Category, ActivityLog, User)
+├── Services/ActivityLogService.php
+bootstrap/
+config/
+docs/ (SYSTEM_DOCUMENTATION.md, diagram, panduan internal)
+resources/views/ (landing page, admin layouts, tabel, form)
+routes/web.php, api.php
 ```
 
-### Access URLs
-```
-Public:  http://localhost:8000/
-Admin:   http://localhost:8000/admin/login
-Creds:   admin / admin123
-```
+## Diagram & Arsitektur
+- ERD & UML ringkas tersedia pada bagian "Database & Diagram" di `docs/SYSTEM_DOCUMENTATION.md`.
+- Anda dapat menambahkan gambar ERD (mis. `docs/erd.png`) lalu referensikan di README bila diperlukan.
+- ActivityLogService menjadi jembatan antara aksi admin dan tabel `activity_logs` untuk audit.
 
----
+## Skema Database (detail kolom utama)
+### Tabel `users`
+| Kolom | Tipe | Keterangan |
+|-------|------|-----------|
+| `id` | bigint PK | Auto increment.
+| `name` | varchar(255) | Nama admin.
+| `email` | varchar(255) unique | Username login.
+| `password` | varchar(255) | Disimpan sebagai hash.
+| `created_at`, `updated_at` | timestamp | Metadata Laravel.
 
-## 📚 Dokumentasi
+### Tabel `categories`
+| Kolom | Tipe | Keterangan |
+|-------|------|-----------|
+| `id` | bigint PK |
+| `name` | varchar(255) unique | Label dropdown form publik.
+| `description` | text nullable | Penjelasan tambahan.
+| `created_at`, `updated_at` | timestamp |
 
-### Untuk Admin / End Users
-- 🚀 [Getting Started Guide](GETTING_STARTED_ADMIN.md) - Panduan memulai
-- 📖 [Admin Panel Guide](ADMIN_PANEL_GUIDE.md) - Panduan lengkap
-- ⚡ [Quick Reference](ADMIN_QUICK_REFERENCE.md) - Cheatsheet
+### Tabel `feedbacks`
+| Kolom | Tipe | Keterangan |
+|-------|------|-----------|
+| `id` | bigint PK |
+| `name` | varchar(255) | Nama pengirim.
+| `email` | varchar(255) | Kontak pengirim.
+| `category_id` | bigint nullable | Relasi ke `categories`.
+| `message` | text | Isi pengaduan/saran.
+| `admin_response` | longtext nullable | Tanggapan admin.
+| `ip_address` | varchar(45) nullable | IP publik untuk audit.
+| `status` | varchar(50) default `baru` | Enum logis `baru/diproses/selesai`.
+| `created_at`, `updated_at` | timestamp |
 
-### Untuk Developer / IT
-- 🔧 [Technical Documentation](ADMIN_TECHNICAL_DOCS.md) - Architecture & API
-- ✨ [Implementation Summary](ADMIN_IMPLEMENTATION_SUMMARY.md) - Project overview
-- 📋 [Admin Panel Ready](ADMIN_PANEL_READY.md) - Completion status
+### Tabel `activity_logs`
+| Kolom | Tipe | Keterangan |
+|-------|------|-----------|
+| `id` | bigint PK |
+| `admin_username` | varchar(255) | User yang melakukan aksi.
+| `action` | varchar(100) | Label tindakan.
+| `description` | text nullable | Detil tambahan.
+| `ip_address` | varchar(45) nullable | IP perangkat admin.
+| `user_agent` | varchar(255) nullable | Browser/perangkat.
+| `status` | varchar(50) default `success` | `success/failed/error`.
+| `created_at`, `updated_at` | timestamp |
 
----
+## Pengujian & Operasional
+- Jalankan `php artisan test` sebelum rilis untuk memastikan validasi dan middleware berjalan.
+- Gunakan `npm run build` sebelum deploy agar aset terkompilasi.
+- Pantau `storage/logs/laravel.log` dan modul Activity Log untuk mendeteksi error atau percobaan akses ilegal.
+- Backup database secara berkala (`mysqldump feedbackbox` atau salin file SQLite) dan pastikan `APP_DEBUG=false` di produksi.
 
-## 📐 Diagrams
-
-### Entity Relationship Diagram (ERD)
-
-```
-┌─────────────────────┐
-│      users          │
-├─────────────────────┤
-│ id (PK)             │
-│ name                │
-│ email               │
-│ password            │
-│ created_at          │
-│ updated_at          │
-└─────────────────────┘
-
-┌──────────────────────────────────┐
-│        feedbacks                 │
-├──────────────────────────────────┤
-│ id (PK)                          │
-│ name                             │
-│ email                            │
-│ category_id (FK) ──────────┐    │
-│ message                    │    │
-│ ip_address                 │    │
-│ status (baru/diproses)     │    │
-│ admin_response             │    │
-│ created_at                 │    │
-│ updated_at                 │    │
-└──────────────────────────────────┘
-         ▲
-         │ has many
-         │
-        (one-to-many)
-         │
-         │
-┌──────────────────────────────────┐
-│      categories                  │
-├──────────────────────────────────┤
-│ id (PK)                          │
-│ name (unique)                    │
-│ description                      │
-│ created_at                       │
-│ updated_at                       │
-└──────────────────────────────────┘
-
-┌──────────────────────────────────┐
-│      activity_logs               │
-├──────────────────────────────────┤
-│ id (PK)                          │
-│ admin_username                   │
-│ action (login/logout/etc)        │
-│ description                      │
-│ ip_address                       │
-│ user_agent                       │
-│ status (success/failed/error)    │
-│ created_at                       │
-│ updated_at                       │
-└──────────────────────────────────┘
-```
-
-### UML Class Diagram
-
-```
-┌─────────────────────────────────────┐
-│           <<Model>> User            │
-├─────────────────────────────────────┤
-│ - id: int                           │
-│ - name: string                      │
-│ - email: string                     │
-│ - password: string (hashed)         │
-│ - created_at: datetime              │
-│ - updated_at: datetime              │
-├─────────────────────────────────────┤
-│ + create()                          │
-│ + update()                          │
-│ + delete()                          │
-└─────────────────────────────────────┘
-
-┌─────────────────────────────────────┐
-│         <<Model>> Feedback          │
-├─────────────────────────────────────┤
-│ - id: int                           │
-│ - name: string                      │
-│ - email: string                     │
-│ - category_id: int (FK)             │
-│ - message: text                     │
-│ - ip_address: string                │
-│ - status: enum                      │
-│ - admin_response: text              │
-│ - created_at: datetime              │
-│ - updated_at: datetime              │
-├─────────────────────────────────────┤
-│ + category(): Category              │
-│ + store()                           │
-│ + update()                          │
-│ + updateStatus()                    │
-│ + addResponse()                     │
-└─────────────────────────────────────┘
-         ▲
-         │ belongs to
-         │
-       (FK)
-         │
-         │
-┌─────────────────────────────────────┐
-│         <<Model>> Category          │
-├─────────────────────────────────────┤
-│ - id: int                           │
-│ - name: string (unique)             │
-│ - description: text                 │
-│ - created_at: datetime              │
-│ - updated_at: datetime              │
-├─────────────────────────────────────┤
-│ + feedbacks(): hasMany              │
-│ + create()                          │
-│ + update()                          │
-│ + delete()                          │
-└─────────────────────────────────────┘
-
-┌──────────────────────────────────────┐
-│      <<Model>> ActivityLog           │
-├──────────────────────────────────────┤
-│ - id: int                            │
-│ - admin_username: string             │
-│ - action: string                     │
-│ - description: text                  │
-│ - ip_address: string                 │
-│ - user_agent: string                 │
-│ - status: enum                       │
-│ - created_at: datetime               │
-│ - updated_at: datetime               │
-├──────────────────────────────────────┤
-│ + log()                              │
-│ + getByAction()                      │
-│ + getByAdmin()                       │
-└──────────────────────────────────────┘
-```
-
----
-
-## 🏗️ Teknologi
-
-| Layer | Technology |
-|-------|-----------|
-| Backend | Laravel 10+ (PHP 8.0+) |
-| Database | SQLite |
-| Frontend | HTML5, CSS3, Vanilla JS |
-| Auth | Session-based |
-| API | RESTful JSON |
-
----
-
-## 🔑 Credentials
-
-```
-URL:      http://localhost:8000/admin/login
-Username: admin
-Password: admin123
-```
-
----
-
-## 📊 Fitur
-
-### Public Website
-- ✅ Homepage dengan info dinas
-- ✅ Feedback form dengan kategori dinamis
-- ✅ Contact information
-- ✅ Responsive design
-
-### Admin Dashboard
-- ✅ Statistics & quick links
-- ✅ Feedback management
-- ✅ Search & filter advanced
-- ✅ Category CRUD
-- ✅ Response management
-- ✅ Status tracking
-
----
-
-## 🔐 Security
-- ✅ CSRF Protection
-- ✅ Session Authentication
-- ✅ Input Validation
-- ✅ SQL Injection Prevention
-- ✅ XSS Protection
-
----
-
-## 📈 Routes
-
-### Public
-```
-GET  /                      Homepage
-POST /feedback              Submit feedback
-GET  /api/categories        Get categories
-```
-
-### Admin
-```
-GET  /admin/login           Login
-GET  /admin                 Dashboard
-GET  /admin/feedback        Feedback list
-GET  /admin/feedback/{id}   Detail
-POST /admin/feedback/{id}/status    Update status
-POST /admin/feedback/{id}/response  Add response
-GET  /admin/categories      Category list
-POST /admin/categories      Create
-POST /admin/categories/{id} Update
-```
-
----
-
-## 📞 Support
-
-For users: Read [Getting Started Guide](GETTING_STARTED_ADMIN.md)  
-For developers: Read [Technical Docs](ADMIN_TECHNICAL_DOCS.md)
-
----
-
-**Status:** ✅ Production Ready | **Version:** 1.0 | **Last Updated:** Nov 2025
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
-#   f e e d b a c k b o x 
- 
- 
+Dokumentasi lanjutan, panduan admin, serta catatan keamanan lengkap ada di `GETTING_STARTED_ADMIN.md` dan `docs/SYSTEM_DOCUMENTATION.md`.
