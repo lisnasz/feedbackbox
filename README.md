@@ -118,7 +118,9 @@ routes/web.php, api.php
 
 ## Diagram & Arsitektur
 - ERD & UML ringkas tersedia pada bagian "Database & Diagram" di `docs/SYSTEM_DOCUMENTATION.md`.
-- Anda dapat menambahkan gambar ERD (mis. `docs/erd.png`) lalu referensikan di README bila diperlukan.
+- Diagram ERD juga tersedia dalam bentuk gambar `erdplus.png` di root repo:
+
+![Entity Relationship Diagram](erdplus.png)
 - ActivityLogService menjadi jembatan antara aksi admin dan tabel `activity_logs` untuk audit.
 
 ## Skema Database (detail kolom utama)
